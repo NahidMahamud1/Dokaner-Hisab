@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Expense Tracker</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f4f6f8;
+            color: #333;
+            line-height: 1.6;
+        }
+        h1, h2 {
+            color: #007bff;
+            margin-bottom: 15px;
+        }
+        #shopSelector, #addExpenseSection, #filterSection, #paymentSection, #expenseList {
+            background-color: #fff;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            border: 1px solid #e0e0e0;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #555;
+        }
+        input[type="text"], input[type="number"], input[type="date"], select {
+            padding: 10px;
+            margin-bottom: 15px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+            width: 100%;
+            font-size: 16px;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s ease;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        #expenseList ul {
+            padding-left: 20px;
+            list-style-type: none;
+        }
+        .expenseItem {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid #eee;
+        }
+        .expenseItem:last-child {
+            border-bottom: none;
+        }
+        #totalDue, #remainingDue {
+            margin-top: 15px;
+            padding-top: 10px;
+            border-top: 2px solid #ccc;
+            font-weight: bold;
+            font-size: 18px;
+            color: #28a745;
+        }
+        .filter-options {
+            margin-bottom: 15px;
+        }
+        .filter-options button {
+            background-color: #6c757d;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            margin-right: 5px;
+            transition: background-color 0.3s ease;
+        }
+        .filter-options button:hover {
+            background-color: #545b62;
+        }
+        #filterSection > div {
+            margin-bottom: 10px;
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        #filterSection > div input[type="date"] {
+            width: auto;
+        }
+
+        @media (max-width: 600px) {
+            body {
+                padding: 10px;
+            }
+            #shopSelector, #addExpenseSection, #filterSection, #paymentSection, #expenseList {
+                padding: 15px;
+            }
+            input[type="text"], input[type="number"], input[type="date"], select, button {
+                font-size: 14px;
+                padding: 8px;
+                margin-bottom: 10px;
+            }
+            .filter-options button {
+                font-size: 12px;
+                padding: 6px 10px;
+                margin-right: 3px;
+            }
+            #filterSection > div {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            #filterSection > div input[type="date"] {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <h1>Expense Tracker</h1>
+
+    <div id="shopSelector">
+        <h2>Manage Shops</h2>
+        <label for="newShopName">New Shop Name:</label><br>
+        <input type="text" id="newShopName" name="newShopName"><br>
+        <button onclick="addShop()">Add Shop</button><br><br>
+
+        <label for="currentShop">Select Shop:</label><br>
+        <select id="currentShop" name="currentShop">
+            <option value="">-- Select a Shop --</option>
+        </select>
+    </div>
+
+    <div id="addExpenseSection">
+        <h2>Add Expense for <span id="currentShopName"></span></h2>
+        <label for="productName">Product Name:</label><br>
+        <input type="text" id="productName" name="productName"><br>
+
+        <label for="price">Price:</label><br>
+        <input type="number" id="price" name="price"><br>
+
+        <label for="expenseDate">Date:</label><br>
+        <input type="date" id="expenseDate" name="expenseDate"><br>
+
+        <button onclick="addExpense()">Add Expense</button>
+    </div>
+
+    <div id="filterSection">
+        <h2>Filter Expenses for <span id="filterShopName"></span></h2>
+        <div class="filter-options">
+            <button onclick="filterExpenses('day')">Today</button>
+            <button onclick="filterExpenses('week')">This Week</button>
+            <button onclick="filterExpenses('month')">This Month</button>
+            <button onclick="filterExpenses('year')">This Year</button>
+        </div>
+        <div>
+            <label for="startDate">Start Date:</label>
+            <input type="date" id="startDate">
+            <label for="endDate">End Date:</label>
+            <input type="date" id="endDate">
+            <button onclick="filterExpenses('custom')">Filter Custom Range</button>
+        </div>
+        <button onclick="generatePDF()">Generate PDF Report</button>
+    </div>
+
+    <div id="expenseList">
+        <h2>Expenses for <span id="currentShopDisplay"></span>:</h2>
+        <ul>
+        </ul>
+        <div id="totalDue">
+            <strong>Total Due: $0.00</strong>
+        </div>
+    </div>
+
+    <div id="paymentSection">
+        <h2>Payment for <span id="paymentShopName"></span></h2>
+        <label for="amountPaid">Amount Paid at Month End:</label><br>
+        <input type="number" id="amountPaid" name="amountPaid"><br>
+        <button onclick="recordPayment()">Record Payment</button><br>
+        <div id="remainingDue">
+            <strong>Remaining Due: $0.00</strong>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script>
+        let shops = {}; // { shopName: { expenses: [], payment: 0, previousDue: 0 } }
+        let currentShop = "";
+        let filteredExpenses = [];
+
+        const currentShopNameDisplay = document.getElementById("currentShopName");
+        const filterShopNameDisplay = document.getElementById("filterShopName");
+        const currentShopDisplay = document.getElementById("currentShopDisplay");
+        const paymentShopNameDisplay = document.getElementById("paymentShopName");
+        const shopSelect = document.getElementById("currentShop");
+        const expenseListUL = document.querySelector("#expenseList ul");
+        const totalDueDisplay = document.getElementById("totalDue");
+        const remainingDueDisplay = document.getElementById("remainingDue");
+        const startDateInput = document.getElementById("startDate");
+        const endDateInput = document.getElementById("endDate");
+
+        // Load data from local storage on page load
+        window.onload = loadData;
+
+        function loadData() {
+            const storedShops = localStorage.getItem('shops');
+            if (storedShops) {
+                shops = JSON.parse(storedShops);
+                populateShopDropdown();
+            }
+            const storedCurrentShop = localStorage.getItem('currentShop');
+            if (storedCurrentShop && shops[storedCurrentShop]) {
+                switchShop(storedCurrentShop);
+            } else if (Object.keys(shops).length > 0) {
+                switchShop(Object.keys(shops)[0]);
+            }
+        }
+
+        function saveData() {
+            localStorage.setItem('shops', JSON.stringify(shops));
+            localStorage.setItem('currentShop', currentShop);
+        }
+
+        function populateShopDropdown() {
+            shopSelect.innerHTML = '<option value="">-- Select a Shop --</option>';
+            for (const shopName in shops) {
+                const newOption = document.createElement("option");
+                newOption.value = shopName;
+                newOption.textContent = shopName;
+                shopSelect.appendChild(newOption);
+            }
+        }
+
+        function addShop() {
+            const newShopNameInput = document.getElementById("newShopName");
+            const newShopName = newShopNameInput.value.trim();
+            if (newShopName && !shops[newShopName]) {
+                shops[newShopName] = { expenses: [], payment: 0, previousDue: 0 };
+                populateShopDropdown();
+                newShopNameInput.value = "";
+                if (!currentShop) {
+                    switchShop(newShopName);
+                }
+                saveData();
+            } else if (shops[newShopName]) {
+                alert("Shop name already exists.");
+            } else {
+                alert("Please enter a shop name.");
+            }
+        }
+
+        function switchShop(shopName) {
+            currentShop = shopName;
+            currentShopNameDisplay.textContent = shopName;
+            filterShopNameDisplay.textContent = shopName;
+            currentShopDisplay.textContent = shopName;
+            paymentShopNameDisplay.textContent = shopName;
+            displayExpenses();
+            displayRemainingDue();
+            saveData();
+        }
+
+        shopSelect.addEventListener("change", function() {
+            switchShop(this.value);
+        });
+
+        function addExpense() {
+            if (!currentShop) {
+                alert("Please select a shop first.");
+                return;
+            }
+
+            const productNameInput = document.getElementById("productName");
+            const priceInput = document.getElementById("price");
+            const dateInput = document.getElementById("expenseDate");
+            const productName = productNameInput.value.trim();
+            const price = parseFloat(priceInput.value);
+            const date = dateInput.value;
+
+            if (productName && !isNaN(price) && date) {
+                const expense = { name: productName, price: price, date: date };
+                shops[currentShop].expenses.push(expense);
+                displayExpenses();
+                productNameInput.value = "";
+                priceInput.value = "";
+                dateInput.value = "";
+                saveData();
+            } else {
+                alert("Please enter product name, a valid price, and the date.");
+            }
+        }
+
+        function displayExpenses(expensesToShow = null) {
+            expenseListUL.innerHTML = ""; // Clear the current list
+            let total = 0;
+            const expenses = expensesToShow || (currentShop && shops[currentShop] ? shops[currentShop].expenses : []);
+
+            expenses.forEach(expense => {
+                const listItem = document.createElement("li");
+                listItem.classList.add("expenseItem");
+                listItem.textContent = `${expense.name}: $${expense.price.toFixed(2)} (${expense.date})`;
+                expenseListUL.appendChild(listItem);
+                total += expense.price;
+            });
+            totalDueDisplay.textContent = `Total Due: $${total.toFixed(2)}`;
+        }
+
+        function filterExpenses(filterType) {
+            if (!currentShop) {
+                alert("Please select a shop first.");
+                return;
+            }
+
+            const allExpenses = shops[currentShop].expenses;
+            let filtered = [];
+            const now = new Date();
+
+            switch (filterType) {
+                case 'day':
+                    filtered = allExpenses.filter(e => new Date(e.date).toDateString() === now.toDateString());
+                    break;
+                case 'week':
+                    const startOfWeek = new Date(now.setDate(now.getDate() - now.getDay()));
+                    const endOfWeek = new Date(now.setDate(now.getDate() + 6));
+                    filtered = allExpenses.filter(e => {
+                        const expenseDate = new Date(e.date);
+                        return expenseDate >= startOfWeek && expenseDate <= endOfWeek;
+                    });
+                    break;
+                case 'month':
+                    filtered = allExpenses.filter(e => new Date(e.date).getMonth() === now.getMonth() && new Date(e.date).getFullYear() === now.getFullYear());
+                    break;
+                case 'year':
+                    filtered = allExpenses.filter(e => new Date(e.date).getFullYear() === now.getFullYear());
+                    break;
+                case 'custom':
+                    const startDate = new Date(startDateInput.value);
+                    const endDate = new Date(endDateInput.value);
+                    if (startDate && endDate && startDate <= endDate) {
+                        filtered = allExpenses.filter(e => {
+                            const expenseDate = new Date(e.date);
+                            return expenseDate >= startDate && expenseDate <= endDate;
+                        });
+                    } else {
+                        alert("Please select a valid start and end date.");
+                        return;
+                    }
+                    break;
+                default:
+                    filtered = allExpenses;
+            }
+            filteredExpenses = filtered;
+            displayExpenses(filtered);
+        }
+
+        function recordPayment() {
+            if (!currentShop) {
+                alert("Please select a shop first.");
+                return;
+            }
+
+            const amountPaidInput = document.getElementById("amountPaid");
+            const amountPaid = parseFloat(amountPaidInput.value);
+
+            if (!isNaN(amountPaid)) {
+                const totalDue = shops[currentShop].expenses.reduce((sum, expense) => sum + expense.price, 0);
+                const remaining = totalDue - shops[currentShop].payment - amountPaid;
+                shops[currentShop].payment += amountPaid;
+                shops[currentShop].previousDue = remaining < 0 ? Math.abs(remaining) : remaining;
+                displayRemainingDue();
+                amountPaidInput.value = "";
+                saveData();
+            } else {
+                alert("Please enter a valid payment amount.");
+            }
+        }
+
+        function displayRemainingDue() {
+            if (currentShop && shops[currentShop]) {
+                const totalDue = shops[currentShop].expenses.reduce((sum, expense) => sum + expense.price, 0);
+                const paid = shops[currentShop].payment;
+                const previousDue = shops[currentShop].previousDue;
+                const remaining = previousDue + totalDue - paid;
+                remainingDueDisplay.textContent = `Remaining Due: $${remaining.toFixed(2)}`;
+            } else {
+                remainingDueDisplay.textContent = `Remaining Due: $0.00`;
+            }
+        }
+
+        function generatePDF() {
+            if (!filteredExpenses || filteredExpenses.length === 0) {
+                alert("No expenses to generate PDF for. Please filter expenses first.");
+                return;
+            }
+
+            const pdf = new jspdf.jsPDF();
+            pdf.setFontSize(12);
+            pdf.text(`Expense Report for ${currentShop}`, 10, 10);
+            pdf.setFontSize(10);
+            let y = 20;
+            let total = 0;
+            filteredExpenses.forEach(expense => {
+                pdf.text(`${expense.name}: $${expense.price.toFixed(2)} (${expense.date})`, 10, y);
+                y += 5;
+                total += expense.price;
+            });
+            pdf.setFontSize(12);
+            pdf.text(`Total: $${total.toFixed(2)}`, 10, y + 10);
+            pdf.save(`${currentShop}_expenses.pdf`);
+        }
+    </script>
+</body>
+</html>
